@@ -18,6 +18,22 @@ const StaticHtml = defineComponent({
 	setup({ name, value, hydrate }) {
 		if (!value) return () => null;
 		let tagName = hydrate ? 'astro-slot' : 'astro-static-slot';
+
+		// Detect if we're in a browser (client-side hydration)
+		const isBrowser = typeof document !== 'undefined';
+
+		if (isBrowser && hydrate) {
+			// During client-side hydration, don't set innerHTML
+			// This allows Vue to adopt existing server-rendered DOM nodes
+			// without replacing them, preserving event listeners and modifications
+			return () => h(tagName, {
+				name,
+				// Suppress hydration mismatch warnings
+				'data-astro-preserve': ''
+			});
+		}
+
+		// Server-side or non-hydrating: use innerHTML as before
 		return () => h(tagName, { name, innerHTML: value });
 	},
 });
